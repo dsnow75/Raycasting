@@ -76,7 +76,10 @@ char* next_string(FILE* json) {
 
 double next_number(FILE* json) {
   double value;
-  fscanf(json, "%f", &value);
+  if (fscanf(json, "%lf", &value) != 1){
+      fprintf(stderr,"Number value not found on line %d.", line);
+      return -1;
+  }
   // Error check this..
   return value;
 }
