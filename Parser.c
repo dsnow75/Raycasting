@@ -8,9 +8,7 @@ int line = 1;
 // number maintenance
 int next_c(FILE* json) {
   int c = fgetc(json);
-#ifdef DEBUG
-  printf("next_c: '%c'\n", c);
-#endif
+
   if (c == '\n') {
     line += 1;
   }
@@ -80,7 +78,6 @@ double next_number(FILE* json) {
       fprintf(stderr,"Number value not found on line %d.", line);
       return -1;
   }
-  // Error check this..
   return value;
 }
 
