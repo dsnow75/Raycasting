@@ -11,10 +11,9 @@
 #include <string.h>
 #include <ctype.h>
 
-// Polymorphism in C
-
+//Structs
 typedef struct {
-  int kind; // 0 = cylinder, 1 = sphere, 2 = teapot
+  int kind; // 0 = cylinder, 1 = sphere
   double color[3];
   double center[3];
   union {
@@ -36,6 +35,7 @@ typedef struct{
     char b;
     } Pixel;
     
+    //Global Variables
     double h = 0.7;
     double w = 0.7;
     int line = 1;
@@ -44,11 +44,12 @@ typedef struct{
     #define MAXCOLOR 255 
     void set_camera(FILE* json);
     
+    //sqr function
 static inline double sqr(double v) {
   return v*v;
 }
 
-
+//normalize function
 static inline void normalize(double* v) {
   double len = sqrt(sqr(v[0]) + sqr(v[1]) + sqr(v[2]));
   v[0] /= len;
@@ -56,7 +57,7 @@ static inline void normalize(double* v) {
   v[2] /= len;
 }
 
-
+//checks for sphere intersection
 double sphere_intersection(double* Ro, double* Rd,
 			     double* C, double r) {
 
@@ -81,6 +82,7 @@ double sphere_intersection(double* Ro, double* Rd,
   return -1;
 }
 
+//checks for plane intersection
 double plane_intersection(double* Ro, double* Rd, double* C, double* normal){
     double d = normal[0]*C[0] + normal[1]*C[1] + normal[2]*C[2];
     double t = -(normal[0]*Ro[0] + normal[1]*Ro[1] + normal[2]*Ro[2] + d)/(normal[0]*Rd[0] + normal[1]*Rd[1] + normal[2]*Rd[2]);
@@ -188,7 +190,7 @@ double* next_vector(FILE* json) {
   return v;
 }
 
-
+//begins the parsing of the file
 void read_scene(char* filename) {
   int c;
   FILE* json = fopen(filename, "r");
@@ -230,6 +232,8 @@ void read_scene(char* filename) {
       skip_ws(json);
 
       char* value = next_string(json);
+      
+      //Sets value of the object or arranges the camera
       if (strcmp(value, "camera") == 0) {
           set_camera(json);
       } else if (strcmp(value, "sphere") == 0) {
@@ -246,6 +250,7 @@ void read_scene(char* filename) {
       }
 
       skip_ws(json);
+      //Makes sure we skip the object if it is the camera because of the function set_camera
       if (strcmp(value, "camera") != 0){
         while (1) {
           // , }
@@ -255,22 +260,27 @@ void read_scene(char* filename) {
             // stop parsing this object
             break;
           } else if (c == ',') {
+              
             // read another field
             skip_ws(json);
             char* key = next_string(json);
             skip_ws(json);
             expect_c(json, ':');
             skip_ws(json);
+            
+            //sets radius
             if (strcmp(key, "radius") == 0) {
               double value = next_number(json);
                if(objects[i]->kind == 1){
                   objects[i]->sphere.radius = value;
               }
+              //Checks for position,color, and normal fields
             } else if ((strcmp(key, "color") == 0) ||
                        (strcmp(key, "position") == 0) ||
                        (strcmp(key, "normal") == 0)) {
               double* value = next_vector(json);
               
+              //sets position and color for sphere
               if(objects[i]->kind == 1){
                   if(strcmp(key, "position") == 0){
                       objects[i]->center[0] = value[0];
@@ -285,6 +295,7 @@ void read_scene(char* filename) {
                       fprintf(stderr, "Non-valid field entered for a sphere");
                       exit(1);
                  }
+                  //sets position and color for plane
               }else if(objects[i]->kind == 0){
                   if(strcmp(key, "position") == 0){
                       objects[i]->center[0] = value[0];
@@ -342,7 +353,7 @@ int main(int argc, char** argv) {
     objects = malloc(sizeof(Object*)*129);
     int index = 0;
     FILE* outputfile;
-    
+    //checks for number of arguments
     if(argc != 5){
         fprintf(stderr, "Please put the commands in the following format: height, weight, source file, destination file.");
         exit(1);
@@ -352,7 +363,7 @@ int main(int argc, char** argv) {
   
   double cx = 0;
   double cy = 0;
-
+//grabs height and width of pixel
   int M = atoi(argv[2]);
   int N = atoi(argv[1]);
   if(M <= 0 || N <= 0){
@@ -362,6 +373,8 @@ int main(int argc, char** argv) {
   image = malloc(sizeof(Pixel)*M*N);
   double pixheight = h / M;
   double pixwidth = w / N;
+  
+  //Set the objects into the proper place and set the image pixels
   for (int y = 0; y < M; y += 1) {
       for (int x = 0; x < N; x += 1) {
         double Ro[3] = {0, 0, 0};
@@ -397,6 +410,7 @@ int main(int argc, char** argv) {
               memcpy(object, objects[i], sizeof(Object));
           } 
         }
+        //set the color for the pixel
         if (best_t > 0 && best_t != INFINITY) {
             image[index].r = (unsigned char)(object->color[0]*MAXCOLOR);
             image[index].g = (unsigned char)(object->color[1]*MAXCOLOR);
@@ -409,7 +423,7 @@ int main(int argc, char** argv) {
           index++;
       }
   }
-  
+  //output to file
   outputfile = fopen(argv[4], "w");
   fprintf(outputfile, "P6\n");
   fprintf(outputfile, "%d %d\n", M, N);
@@ -417,7 +431,7 @@ int main(int argc, char** argv) {
   fwrite(image, sizeof(Pixel), M*N, outputfile);
   return 0;
 }
-
+//set camera view
 void set_camera(FILE* json){
     int c;
     skip_ws(json);
