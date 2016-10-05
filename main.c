@@ -230,7 +230,6 @@ void read_scene(char* filename) {
       skip_ws(json);
 
       char* value = next_string(json);
-  printf(value);
       if (strcmp(value, "camera") == 0) {
           set_camera(json);
       } else if (strcmp(value, "sphere") == 0) {
@@ -356,6 +355,10 @@ int main(int argc, char** argv) {
 
   int M = atoi(argv[2]);
   int N = atoi(argv[1]);
+  if(M <= 0 || N <= 0){
+      fprintf(stderr, "Please make Height and Width a positive integer.");
+      exit(1);
+  }
   image = malloc(sizeof(Pixel)*M*N);
   double pixheight = h / M;
   double pixwidth = w / N;
